@@ -957,6 +957,9 @@ function doHwCalibrate() {
     const newOffset = match.advance - pressAdvanceUsed;
     const hitTarget = match.advance === currentTarget.advance;
 
+    // Clear the IV calc status since we found a definite match
+    ivCalcStatus.textContent = '';
+
     // Record this attempt
     recordAttempt(currentTarget.pokemon, match.delta);
 
