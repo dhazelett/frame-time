@@ -126,7 +126,6 @@ const statSpdInput = document.getElementById('statSpd');
 const statSpeInput = document.getElementById('statSpe');
 const calcIvsBtn = document.getElementById('calcIvsBtn');
 const ivCalcStatus = document.getElementById('ivCalcStatus');
-const hwIvsInput = document.getElementById('hwIvs');
 const hwCalibrateBtn = document.getElementById('hwCalibrateBtn');
 const hwCalibrationResult = document.getElementById('hwCalibrationResult');
 const attemptHistorySection = document.getElementById('attemptHistorySection');
@@ -440,7 +439,6 @@ function calculateIvs() {
     if (possibleIvs[i].length === 0) {
       ivCalcStatus.textContent = `No valid IV found for ${statNames[i]}. Check your inputs.`;
       ivCalcStatus.classList.add('error');
-      hwIvsInput.value = '';
       return;
     }
   }
@@ -459,19 +457,14 @@ function calculateIvs() {
   const hasRanges = possibleIvs.some(arr => arr.length > 1);
 
   if (hasRanges) {
-    // Show ranges but warn the user
+    // Show ranges - calibration will expand all combinations
     const ivStr = possibleIvs.map(formatIv).join('/');
-    hwIvsInput.value = '';
-    ivCalcStatus.innerHTML = `Possible IVs: <code>${ivStr}</code><br>Multiple possibilities - try a higher level or different Pokemon for exact IVs.`;
+    ivCalcStatus.innerHTML = `Possible IVs: <code>${ivStr}</code><br>Multiple possibilities - try a higher level for exact IVs.`;
     ivCalcStatus.classList.remove('error');
-
-    // If ranges are small, we can still try to find matches
-    // For calibration, we'll expand all combinations
   } else {
     // Exact IVs found
     const ivStr = possibleIvs.map(arr => arr[0]).join('/');
-    hwIvsInput.value = ivStr;
-    ivCalcStatus.textContent = 'IVs calculated successfully!';
+    ivCalcStatus.innerHTML = `IVs: <code>${ivStr}</code>`;
     ivCalcStatus.classList.remove('error');
   }
 
@@ -875,37 +868,22 @@ function doHwCalibrate() {
     return;
   }
 
-  // Get IVs - either from the input field or calculate from stats
-  let ivCombinations = [];
-  const ivsStr = hwIvsInput.value.trim();
-
-  if (ivsStr) {
-    // Use manually entered or calculated exact IVs
-    const targetIvs = parseIvs(ivsStr);
-    if (!targetIvs) {
-      hwCalibrationResult.innerHTML = '<span style="color: #ff6b6b">Invalid IVs format. Use: HP/Atk/Def/SpA/SpD/Spe (e.g. 31/15/20/31/25/10)</span>';
-      return;
-    }
-    ivCombinations = [targetIvs];
-  } else {
-    // Try to calculate from stats - this handles IV ranges
-    const possibleIvs = calculateIvs();
-    if (!possibleIvs) {
-      hwCalibrationResult.innerHTML = '<span style="color: #ff6b6b">Enter stats to calculate IVs, or enter IVs directly</span>';
-      return;
-    }
-
-    // Generate all combinations of possible IVs
-    // Limit total combinations to prevent browser freeze
-    const totalCombos = possibleIvs.reduce((acc, arr) => acc * arr.length, 1);
-    if (totalCombos > 1000) {
-      hwCalibrationResult.innerHTML = `<span style="color: #ff6b6b">Too many IV combinations (${totalCombos}). Try getting more precise stats.</span>`;
-      return;
-    }
-
-    // Generate all combinations
-    ivCombinations = generateIvCombinations(possibleIvs);
+  // Calculate IVs from stats
+  const possibleIvs = calculateIvs();
+  if (!possibleIvs) {
+    hwCalibrationResult.innerHTML = '<span style="color: #ff6b6b">Enter stats to calculate IVs</span>';
+    return;
   }
+
+  // Generate all combinations of possible IVs
+  // Limit total combinations to prevent browser freeze
+  const totalCombos = possibleIvs.reduce((acc, arr) => acc * arr.length, 1);
+  if (totalCombos > 1000) {
+    hwCalibrationResult.innerHTML = `<span style="color: #ff6b6b">Too many IV combinations (${totalCombos}). Try getting more precise stats.</span>`;
+    return;
+  }
+
+  const ivCombinations = generateIvCombinations(possibleIvs);
 
   const tid = parseInt(tidInput.value) || 0;
   const sid = parseInt(sidInput.value) || 0;
