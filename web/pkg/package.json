@@ -1,0 +1,17 @@
+{
+  "name": "frame-time-wasm",
+  "type": "module",
+  "description": "WASM bindings for Gen 3 Pokemon RNG core",
+  "version": "0.1.0",
+  "license": "MIT",
+  "files": [
+    "frame_time_wasm_bg.wasm",
+    "frame_time_wasm.js",
+    "frame_time_wasm.d.ts"
+  ],
+  "main": "frame_time_wasm.js",
+  "types": "frame_time_wasm.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

@@ -1,0 +1,10 @@
+/target
+/wasm/pkg
+Cargo.lock
+*.swp
+*.swo
+*~
+.DS_Store
+.tid
+.sid
+.claude/

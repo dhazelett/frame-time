@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gen 3 RNG Tool</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Gen 3 RNG Tool</h1>
+    <p class="subtitle">Emerald Static Encounters (Method 1)</p>
+
+    <!-- TID/SID Section -->
+    <section class="card">
+      <h2>Trainer IDs</h2>
+      <div class="form-row">
+        <label>
+          TID
+          <input type="number" id="tid" min="0" max="65535" value="9610">
+        </label>
+        <label>
+          SID
+          <input type="number" id="sid" min="0" max="65535" value="48293">
+        </label>
+      </div>
+    </section>
+
+    <!-- Target Search Section -->
+    <section class="card">
+      <h2>1. Find Shiny Targets</h2>
+      <div class="form-row">
+        <label>
+          Pokemon
+          <select id="pokemon">
+            <optgroup label="Weather Trio">
+              <option value="rayquaza" selected>Rayquaza (Sky Pillar)</option>
+              <option value="kyogre">Kyogre (Marine Cave)</option>
+              <option value="groudon">Groudon (Terra Cave)</option>
+            </optgroup>
+            <optgroup label="Regis">
+              <option value="regirock">Regirock (Desert Ruins)</option>
+              <option value="regice">Regice (Island Cave)</option>
+              <option value="registeel">Registeel (Ancient Tomb)</option>
+            </optgroup>
+            <optgroup label="Event Pokemon">
+              <option value="latios">Latios (Southern Island)</option>
+              <option value="latias">Latias (Southern Island)</option>
+              <option value="mew">Mew (Faraway Island)</option>
+              <option value="lugia">Lugia (Navel Rock)</option>
+              <option value="hooh">Ho-Oh (Navel Rock)</option>
+              <option value="deoxys">Deoxys (Birth Island)</option>
+            </optgroup>
+          </select>
+        </label>
+        <label>
+          Max Advance
+          <input type="number" id="maxAdvance" min="1000" max="1000000" value="100000">
+        </label>
+      </div>
+      <div class="form-row">
+        <label>
+          Nature (optional)
+          <select id="natures">
+            <option value="">Any</option>
+            <option value="Adamant">Adamant (+Atk -SpA)</option>
+            <option value="Bashful">Bashful</option>
+            <option value="Bold">Bold (+Def -Atk)</option>
+            <option value="Brave">Brave (+Atk -Spe)</option>
+            <option value="Calm">Calm (+SpD -Atk)</option>
+            <option value="Careful">Careful (+SpD -SpA)</option>
+            <option value="Docile">Docile</option>
+            <option value="Gentle">Gentle (+SpD -Def)</option>
+            <option value="Hardy">Hardy</option>
+            <option value="Hasty">Hasty (+Spe -Def)</option>
+            <option value="Impish">Impish (+Def -SpA)</option>
+            <option value="Jolly">Jolly (+Spe -SpA)</option>
+            <option value="Lax">Lax (+Def -SpD)</option>
+            <option value="Lonely">Lonely (+Atk -Def)</option>
+            <option value="Mild">Mild (+SpA -Def)</option>
+            <option value="Modest">Modest (+SpA -Atk)</option>
+            <option value="Naive">Naive (+Spe -SpD)</option>
+            <option value="Naughty">Naughty (+Atk -SpD)</option>
+            <option value="Quiet">Quiet (+SpA -Spe)</option>
+            <option value="Quirky">Quirky</option>
+            <option value="Rash">Rash (+SpA -SpD)</option>
+            <option value="Relaxed">Relaxed (+Def -Spe)</option>
+            <option value="Sassy">Sassy (+SpD -Spe)</option>
+            <option value="Serious">Serious</option>
+            <option value="Timid">Timid (+Spe -Atk)</option>
+          </select>
+        </label>
+      </div>
+      <button id="searchBtn">Search</button>
+      <div id="searchStatus" class="status"></div>
+      <div id="resultsContainer">
+        <table id="results">
+          <thead>
+            <tr>
+              <th>Advance</th>
+              <th>Time</th>
+              <th>PID</th>
+              <th>Nature</th>
+              <th>IVs</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Current Attempt Section -->
+    <section class="card" id="attemptCard">
+      <h2>2. Current Attempt</h2>
+      <div id="noTarget" class="hint">Select a target from the search results above.</div>
+      <div id="attemptInfo" class="attempt-info" style="display: none;">
+        <div class="attempt-row">
+          <span class="label">Target Pokemon:</span>
+          <span id="attemptPokemon" class="value">-</span>
+        </div>
+        <div class="attempt-row">
+          <span class="label">Target Advance:</span>
+          <span id="attemptTarget" class="value">-</span>
+        </div>
+        <div class="attempt-row">
+          <span class="label">Target Time:</span>
+          <span id="attemptTime" class="value">-</span>
+        </div>
+        <div class="attempt-row">
+          <span class="label">Target PID:</span>
+          <span id="attemptTargetPid" class="value">-</span>
+        </div>
+        <div class="attempt-row">
+          <span class="label">Current Offset:</span>
+          <span id="attemptOffset" class="value">0</span>
+          <button id="resetOffsetBtn" class="small-btn">Reset</button>
+        </div>
+        <div class="attempt-row highlight">
+          <span class="label">Press A at Advance:</span>
+          <span id="pressAdvance" class="value highlight-value">-</span>
+        </div>
+        <div class="attempt-row highlight">
+          <span class="label">Press A at RNG:</span>
+          <span id="pressRng" class="value highlight-value">-</span>
+        </div>
+
+        <!-- Mode Toggle -->
+        <div class="mode-toggle">
+          <button id="hardwareModeBtn" class="mode-btn active">Hardware Mode</button>
+          <button id="emulatorModeBtn" class="mode-btn">Emulator Mode</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Advance Counter Section -->
+    <section class="card">
+      <h2>3. Navigate to Target</h2>
+      <p class="hint">Read RNG from <code>0x03005D80</code> in emulator memory viewer. Fast-forward, then frame-step to the Press-A advance.</p>
+      <div class="form-row">
+        <label>
+          Current RNG (hex)
+          <input type="text" id="currentRng" placeholder="e.g. A3C4FF79">
+        </label>
+      </div>
+      <div id="counterResult" class="counter-display">
+        <div class="counter-row">
+          <span class="label">Current Advance:</span>
+          <span id="currentAdvance" class="value">-</span>
+        </div>
+        <div class="counter-row">
+          <span class="label">Press-A Advance:</span>
+          <span id="targetAdvanceDisplay" class="value">-</span>
+        </div>
+        <div class="counter-row large">
+          <span class="label">Frames Remaining:</span>
+          <span id="framesRemaining" class="value">-</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Calibration Section (Emulator Mode) -->
+    <section class="card" id="calibrationSection">
+      <h2>4. Calibrate (After Attempt)</h2>
+      <p class="hint">After pressing A and entering the encounter, read PID from <code>0x02024744</code> to see what you hit.</p>
+      <div class="form-row">
+        <label>
+          Hit PID (hex)
+          <input type="text" id="pidInput" placeholder="e.g. EF0E7625">
+        </label>
+      </div>
+      <button id="calibrateBtn">Calibrate</button>
+      <div id="calibrationResult" class="calibration-display"></div>
+    </section>
+
+    <!-- Hardware Timer Section -->
+    <section class="card" id="timerSection" style="display: none;">
+      <h2>3. Hardware Timer</h2>
+      <p class="hint">Reset your GBA, start the timer, and press A when you hear the final beep.</p>
+
+      <div class="form-row">
+        <label>
+          Emulator FPS
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="fps" value="60" checked> 60
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="fps" value="59.7275"> 59.7275
+            </label>
+          </div>
+        </label>
+        <label>
+          Pre-timer (ms)
+          <input type="number" id="preTimer" min="0" max="30000" value="5000" step="100">
+        </label>
+      </div>
+      <div class="form-row">
+        <label>
+          Beep Interval (ms)
+          <input type="number" id="beepInterval" min="100" max="2000" value="500" step="50">
+        </label>
+        <label>
+          Audio Offset (ms)
+          <input type="number" id="audioOffset" min="-500" max="500" value="0" step="10">
+        </label>
+      </div>
+
+      <div class="timer-controls">
+        <button id="startTimerBtn" class="timer-btn">Start Timer</button>
+        <button id="stopTimerBtn" class="timer-btn" disabled>Stop</button>
+        <button id="practiceBtn" class="timer-btn practice">Practice (3s)</button>
+      </div>
+
+      <div id="timerDisplay" class="timer-display">
+        <div class="timer-phase" id="timerPhase">Ready</div>
+        <div class="timer-countdown" id="timerCountdown">-</div>
+        <div class="timer-beeps" id="timerBeeps">
+          <span class="beep-dot"></span>
+          <span class="beep-dot"></span>
+          <span class="beep-dot"></span>
+        </div>
+        <div class="timer-instruction" id="timerInstruction"></div>
+
+        <!-- Practice tap button -->
+        <button id="practiceTapBtn" class="practice-tap-btn" style="display: none;">TAP!</button>
+        <div id="practiceResult" class="practice-result"></div>
+        <div id="practiceStats" class="practice-stats" style="display: none;"></div>
+      </div>
+
+      <div class="timer-info">
+        <p><strong>Workflow (Static Encounters):</strong></p>
+        <ol>
+          <li>Start timer, then soft reset (A+B+Start+Select)</li>
+          <li>Mash A through intro, load save, navigate to Pokemon</li>
+          <li>Press A on the final beep</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- Hardware Calibration Section -->
+    <section class="card" id="hwCalibrationSection" style="display: none;">
+      <h2>4. Calibrate (After Catch)</h2>
+      <p class="hint">Catch the Pokemon (even if not shiny) and enter its stats from the summary screen.</p>
+
+      <div class="form-row">
+        <label>
+          Nature
+          <select id="hwNature">
+            <option value="">-- Select --</option>
+            <option value="Adamant">Adamant (+Atk -SpA)</option>
+            <option value="Bashful">Bashful</option>
+            <option value="Bold">Bold (+Def -Atk)</option>
+            <option value="Brave">Brave (+Atk -Spe)</option>
+            <option value="Calm">Calm (+SpD -Atk)</option>
+            <option value="Careful">Careful (+SpD -SpA)</option>
+            <option value="Docile">Docile</option>
+            <option value="Gentle">Gentle (+SpD -Def)</option>
+            <option value="Hardy">Hardy</option>
+            <option value="Hasty">Hasty (+Spe -Def)</option>
+            <option value="Impish">Impish (+Def -SpA)</option>
+            <option value="Jolly">Jolly (+Spe -SpA)</option>
+            <option value="Lax">Lax (+Def -SpD)</option>
+            <option value="Lonely">Lonely (+Atk -Def)</option>
+            <option value="Mild">Mild (+SpA -Def)</option>
+            <option value="Modest">Modest (+SpA -Atk)</option>
+            <option value="Naive">Naive (+Spe -SpD)</option>
+            <option value="Naughty">Naughty (+Atk -SpD)</option>
+            <option value="Quiet">Quiet (+SpA -Spe)</option>
+            <option value="Quirky">Quirky</option>
+            <option value="Rash">Rash (+SpA -SpD)</option>
+            <option value="Relaxed">Relaxed (+Def -Spe)</option>
+            <option value="Sassy">Sassy (+SpD -Spe)</option>
+            <option value="Serious">Serious</option>
+            <option value="Timid">Timid (+Spe -Atk)</option>
+          </select>
+        </label>
+        <label>
+          Level
+          <input type="number" id="hwLevel" min="1" max="100" value="70">
+        </label>
+      </div>
+
+      <p class="hint" style="margin-top: 0.5rem;">Enter the stats shown on the summary screen:</p>
+      <div class="form-row">
+        <label>
+          HP
+          <input type="number" id="statHp" min="1" max="999">
+        </label>
+        <label>
+          Attack
+          <input type="number" id="statAtk" min="1" max="999">
+        </label>
+        <label>
+          Defense
+          <input type="number" id="statDef" min="1" max="999">
+        </label>
+      </div>
+      <div class="form-row">
+        <label>
+          Sp. Atk
+          <input type="number" id="statSpa" min="1" max="999">
+        </label>
+        <label>
+          Sp. Def
+          <input type="number" id="statSpd" min="1" max="999">
+        </label>
+        <label>
+          Speed
+          <input type="number" id="statSpe" min="1" max="999">
+        </label>
+      </div>
+
+      <div class="form-row" style="align-items: flex-end;">
+        <label style="flex: 2;">
+          Calculated IVs
+          <input type="text" id="hwIvs" readonly placeholder="Select Pokemon, nature, and enter stats">
+        </label>
+        <button id="calcIvsBtn" style="flex: 0; white-space: nowrap;">Calculate IVs</button>
+      </div>
+      <div id="ivCalcStatus" class="status"></div>
+
+      <button id="hwCalibrateBtn" style="margin-top: 1rem;">Find Matching Advance</button>
+      <div id="hwCalibrationResult" class="calibration-display"></div>
+      <div id="attemptHistorySection" class="attempt-history">
+        <h3>Attempt History</h3>
+        <div id="attemptHistoryStats"></div>
+        <div id="attemptHistoryList"></div>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
