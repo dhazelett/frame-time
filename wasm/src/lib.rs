@@ -1,5 +1,7 @@
 //! WASM bindings for the Gen 3 Pokemon RNG core.
 
+#![allow(clippy::clone_on_copy)]
+
 use std::sync::OnceLock;
 
 use wasm_bindgen::prelude::*;
